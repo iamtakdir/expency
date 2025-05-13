@@ -9,6 +9,12 @@ export function TransactionProvider({ children }) {
     setTransactions([...transactions, { ...transaction, id: Date.now().toString() }]);
   };
 
+  const updateTransaction = (id, updatedTransaction) => {
+    setTransactions(transactions.map(t => 
+      t.id === id ? { ...updatedTransaction, id } : t
+    ));
+  };
+
   const deleteTransaction = (id) => {
     setTransactions(transactions.filter(t => t.id !== id));
   };
@@ -34,6 +40,7 @@ export function TransactionProvider({ children }) {
       value={{
         transactions,
         addTransaction,
+        updateTransaction,
         deleteTransaction,
         getIncome,
         getExpenses,

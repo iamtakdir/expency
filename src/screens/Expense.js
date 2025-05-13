@@ -1,27 +1,38 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
-import { Button, Surface, Text, TextInput } from 'react-native-paper';
+import { Button, IconButton, Surface, Text, TextInput } from 'react-native-paper';
 import CategoryPicker from '../components/CategoryPicker';
 import { BORDER_RADIUS, CATEGORIES, COLORS, FONTS, SHADOWS, SPACING } from '../constants/theme';
 import { useTransactions } from '../context/TransactionContext';
 
 export default function Expense() {
-  const { addTransaction, transactions } = useTransactions();
+  const { addTransaction, updateTransaction, deleteTransaction, transactions } = useTransactions();
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState('');
+  const [editingTransaction, setEditingTransaction] = useState(null);
 
   const handleAddExpense = () => {
     if (!amount || !description || !category) return;
 
-    addTransaction({
-      type: 'expense',
-      amount: parseFloat(amount),
-      description,
-      category,
-      date: new Date().toISOString(),
-    });
+    if (editingTransaction) {
+      updateTransaction(editingTransaction.id, {
+        ...editingTransaction,
+        amount: parseFloat(amount),
+        description,
+        category,
+      });
+      setEditingTransaction(null);
+    } else {
+      addTransaction({
+        type: 'expense',
+        amount: parseFloat(amount),
+        description,
+        category,
+        date: new Date().toISOString(),
+      });
+    }
 
     setAmount('');
     setDescription('');
@@ -35,9 +46,6 @@ export default function Expense() {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView>
-   
-     
-
         <Surface style={styles.formCard}>
           <View style={styles.amountContainer}>
             <Text style={[styles.currencySymbol, { color: COLORS.danger }]}>$</Text>
@@ -81,8 +89,24 @@ export default function Expense() {
             buttonColor={!amount || !description || !category ? COLORS.disabled.background : COLORS.danger}
             textColor={!amount || !description || !category ? COLORS.disabled.text : COLORS.white}
           >
-            Add Expense
+            {editingTransaction ? 'Update Expense' : 'Add Expense'}
           </Button>
+
+          {editingTransaction && (
+            <Button
+              mode="text"
+              onPress={() => {
+                setEditingTransaction(null);
+                setAmount('');
+                setDescription('');
+                setCategory('');
+              }}
+              style={{ marginTop: SPACING.s }}
+              textColor={COLORS.textLight}
+            >
+              Cancel Edit
+            </Button>
+          )}
         </Surface>
 
         <View style={styles.section}>
@@ -108,6 +132,27 @@ export default function Expense() {
               <Text style={styles.transactionAmount}>
                 -${parseFloat(transaction.amount).toFixed(2)}
               </Text>
+              <View style={styles.actionButtons}>
+                <IconButton
+                  icon="pencil"
+                  size={20}
+                  iconColor={COLORS.primary}
+                  onPress={() => {
+                    setAmount(transaction.amount.toString());
+                    setDescription(transaction.description);
+                    setCategory(transaction.category);
+                    setEditingTransaction(transaction);
+                  }}
+                  style={styles.actionButton}
+                />
+                <IconButton
+                  icon="delete"
+                  size={20}
+                  iconColor={COLORS.danger}
+                  onPress={() => deleteTransaction(transaction.id)}
+                  style={styles.actionButton}
+                />
+              </View>
             </Surface>
           ))}
         </View>
@@ -213,5 +258,17 @@ const styles = StyleSheet.create({
   transactionAmount: {
     ...FONTS.h2,
     color: COLORS.danger,
+    marginRight: SPACING.s,
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: SPACING.s,
+  },
+  actionButton: {
+    margin: 0,
+    padding: 0,
+    width: 32,
+    height: 32,
   },
 }); 
