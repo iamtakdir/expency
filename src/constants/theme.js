@@ -1,23 +1,49 @@
 export const COLORS = {
   primary: '#4169E1',  // Royal Blue
-  secondary: '#E8EEFA', // Light blue background
+  secondary: '#F8FAFC', // Very light blue-gray background
   white: '#FFFFFF',
   black: '#000000',
   text: '#1A1A1A',
-  textLight: '#757575',
-  success: '#2ecc71',  // Bright green
-  danger: '#e74c3c',   // Bright red
-  background: '#F5F7FF',
+  textLight: '#94A3B8',
+  success: '#22C55E',  // Softer green
+  danger: '#EF4444',   // Softer red
+  background: '#F8FAFC',
   card: '#FFFFFF',
-  border: '#E5E5E5',
+  border: '#E2E8F0',
   disabled: {
-    background: '#E2E8F0',  // Grayish background for disabled state
-    text: '#64748B',      // Dark gray text for disabled state
+    background: '#F1F5F9',  // Very light gray background
+    text: '#334155',      // Much darker slate for better visibility
+  },
+  button: {
+    primary: {
+      active: '#4169E1',
+      disabled: '#F1F5F9',
+      text: {
+        active: '#FFFFFF',
+        disabled: '#334155'
+      }
+    },
+    success: {
+      active: '#22C55E',
+      disabled: '#F1F5F9',
+      text: {
+        active: '#FFFFFF',
+        disabled: '#334155'
+      }
+    },
+    danger: {
+      active: '#EF4444',
+      disabled: '#F1F5F9',
+      text: {
+        active: '#FFFFFF',
+        disabled: '#334155'
+      }
+    }
   },
   gradient: {
     primary: ['#4169E1', '#5C85E8'],
-    success: ['#2ecc71', '#27ae60'],
-    danger: ['#e74c3c', '#c0392b']
+    success: ['#22C55E', '#16A34A'],
+    danger: ['#EF4444', '#DC2626']
   }
 };
 

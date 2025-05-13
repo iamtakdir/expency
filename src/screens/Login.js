@@ -62,10 +62,13 @@ export default function Login({ navigation }) {
           <Button
             mode="contained"
             onPress={handleLogin}
-            style={styles.button}
-            buttonColor={COLORS.primary}
-            textColor={COLORS.white}
+            style={[
+              styles.button,
+              !username || !password ? { backgroundColor: COLORS.button.primary.disabled } : null
+            ]}
             disabled={!username || !password}
+            buttonColor={COLORS.button.primary.active}
+            textColor={!username || !password ? COLORS.button.primary.text.disabled : COLORS.button.primary.text.active}
           >
             Login
           </Button>

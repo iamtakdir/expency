@@ -81,10 +81,15 @@ export default function Signup({ navigation }) {
           <Button
             mode="contained"
             onPress={handleSignup}
-            style={styles.button}
-            buttonColor={COLORS.primary}
-            textColor={COLORS.white}
+            style={[
+              styles.button,
+              !username || !password || !confirmPassword || password !== confirmPassword ? 
+                { backgroundColor: COLORS.button.primary.disabled } : null
+            ]}
             disabled={!username || !password || !confirmPassword || password !== confirmPassword}
+            buttonColor={COLORS.button.primary.active}
+            textColor={!username || !password || !confirmPassword || password !== confirmPassword ? 
+              COLORS.button.primary.text.disabled : COLORS.button.primary.text.active}
           >
             Sign Up
           </Button>

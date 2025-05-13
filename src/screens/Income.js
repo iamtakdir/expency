@@ -109,10 +109,13 @@ export default function Income() {
           <Button
             mode="contained"
             onPress={handleAddIncome}
-            style={styles.button}
+            style={[
+              styles.button,
+              !amount || !description || !category ? { backgroundColor: COLORS.button.success.disabled } : null
+            ]}
             disabled={!amount || !description || !category}
-            buttonColor={!amount || !description || !category ? COLORS.disabled.background : COLORS.success}
-            textColor={!amount || !description || !category ? COLORS.disabled.text : COLORS.white}
+            buttonColor={COLORS.button.success.active}
+            textColor={!amount || !description || !category ? COLORS.button.success.text.disabled : COLORS.button.success.text.active}
           >
             {editingTransaction ? 'Update Income' : 'Add Income'}
           </Button>
@@ -213,7 +216,7 @@ const styles = StyleSheet.create({
     padding: SPACING.l,
     borderRadius: BORDER_RADIUS.xl,
     backgroundColor: COLORS.white,
-    ...SHADOWS.medium,
+    ...SHADOWS.small,
   },
   amountContainer: {
     flexDirection: 'row',
@@ -225,6 +228,7 @@ const styles = StyleSheet.create({
   currencySymbol: {
     ...FONTS.h1,
     marginRight: SPACING.xs,
+    color: COLORS.success,
   },
   amountInput: {
     ...FONTS.title,
@@ -232,6 +236,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     flex: 1,
     paddingVertical: SPACING.m,
+    color: COLORS.text,
   },
   sectionTitle: {
     ...FONTS.h2,
@@ -243,6 +248,7 @@ const styles = StyleSheet.create({
     marginTop: SPACING.l,
     marginBottom: SPACING.m,
     backgroundColor: COLORS.white,
+    borderRadius: BORDER_RADIUS.m,
   },
   button: {
     marginTop: SPACING.m,

@@ -84,10 +84,13 @@ export default function Expense() {
           <Button
             mode="contained"
             onPress={handleAddExpense}
-            style={styles.button}
+            style={[
+              styles.button,
+              !amount || !description || !category ? { backgroundColor: COLORS.button.danger.disabled } : null
+            ]}
             disabled={!amount || !description || !category}
-            buttonColor={!amount || !description || !category ? COLORS.disabled.background : COLORS.danger}
-            textColor={!amount || !description || !category ? COLORS.disabled.text : COLORS.white}
+            buttonColor={COLORS.button.danger.active}
+            textColor={!amount || !description || !category ? COLORS.button.danger.text.disabled : COLORS.button.danger.text.active}
           >
             {editingTransaction ? 'Update Expense' : 'Add Expense'}
           </Button>
