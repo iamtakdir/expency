@@ -1,9 +1,7 @@
 import { useState } from 'react';
-import { Dimensions, SafeAreaView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Button, Surface, Text, TextInput } from 'react-native-paper';
 import { BORDER_RADIUS, COLORS, FONTS, SHADOWS, SPACING } from '../constants/theme';
-
-const { width } = Dimensions.get('window');
 
 export default function Signup({ navigation }) {
   const [username, setUsername] = useState('');

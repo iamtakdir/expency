@@ -12,8 +12,6 @@ export default function Income() {
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState('');
   const [editingTransaction, setEditingTransaction] = useState(null);
-  const [menuVisible, setMenuVisible] = useState(false);
-  const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [deleteDialogVisible, setDeleteDialogVisible] = useState(false);
   const [transactionToDelete, setTransactionToDelete] = useState(null);
   const [expandedActionId, setExpandedActionId] = useState(null);
@@ -50,14 +48,12 @@ export default function Income() {
     setDescription(transaction.description);
     setCategory(transaction.category);
     setEditingTransaction(transaction);
-    setMenuVisible(false);
   };
 
   const handleDeletePress = (transaction) => {
     setExpandedActionId(null);
     setTransactionToDelete(transaction);
     setDeleteDialogVisible(true);
-    setMenuVisible(false);
   };
 
   const confirmDelete = () => {
@@ -72,29 +68,9 @@ export default function Income() {
     setExpandedActionId(expandedActionId === id ? null : id);
   };
 
-  const openMenu = (transaction) => {
-    setSelectedTransaction(transaction);
-    setMenuVisible(true);
-  };
-
-  const closeMenu = () => {
-    setMenuVisible(false);
-    setSelectedTransaction(null);
-  };
-
   const incomeTransactions = transactions
     .filter(t => t.type === 'income')
     .sort((a, b) => new Date(b.date) - new Date(a.date));
-
-  const AddIncomeButton = () => (
-    <TouchableOpacity 
-      style={styles.addButton} 
-      onPress={handleAddIncome}
-      activeOpacity={0.8}
-    >
-      <Text style={styles.addButtonText}>Add Income</Text>
-    </TouchableOpacity>
-  );
 
   return (
     <SafeAreaView style={styles.container}>
@@ -112,7 +88,7 @@ export default function Income() {
                 {editingTransaction ? 'Edit Income' : 'New Income'}
               </Text>
             </View>
-            
+
             <View style={styles.amountContainer}>
               <Text style={[styles.currencySymbol, { color: COLORS.success }]}>$</Text>
               <TextInput
@@ -152,20 +128,15 @@ export default function Income() {
               <Button
                 mode="contained"
                 onPress={handleAddIncome}
-                style={[
-                  styles.button,
-                  !amount || !description || !category ? { backgroundColor: COLORS.button.success.disabled } : null
-                ]}
+                style={styles.button}
                 disabled={!amount || !description || !category}
                 buttonColor={COLORS.button.success.active}
                 textColor={!amount || !description || !category ? COLORS.button.success.text.disabled : COLORS.button.success.text.active}
                 icon={editingTransaction ? "pencil" : "plus"}
               >
-                 <Text style={
-                                  styles.addButtonText
-                                }>{editingTransaction ? 'Update Income' : 'Add Income'}</Text>
+                {editingTransaction ? 'Update Income' : 'Add Income'}
               </Button>
-              
+
               {editingTransaction && (
                 <Button
                   mode="outlined"
@@ -192,7 +163,7 @@ export default function Income() {
                 {incomeTransactions.length} {incomeTransactions.length === 1 ? 'transaction' : 'transactions'}
               </Text>
             </View>
-            
+
             {incomeTransactions.length === 0 ? (
               <Surface style={styles.emptyState}>
                 <MaterialCommunityIcons name="cash-plus" size={48} color={COLORS.textLight} />
@@ -236,7 +207,7 @@ export default function Income() {
                       +${parseFloat(transaction.amount).toFixed(2)}
                     </Text>
                   </TouchableOpacity>
-                  
+
                   {expandedActionId === transaction.id && (
                     <View style={styles.expandedActions}>
                       <TouchableOpacity
@@ -248,7 +219,7 @@ export default function Income() {
                         </View>
                         <Text style={styles.expandedActionText}>Edit</Text>
                       </TouchableOpacity>
-                      
+
                       <TouchableOpacity
                         style={[styles.expandedActionButton, styles.deleteActionButton]}
                         onPress={() => handleDeletePress(transaction)}
@@ -263,7 +234,7 @@ export default function Income() {
                 </Surface>
               ))
             )}
-            
+
             {incomeTransactions.length > 5 && (
               <Button
                 mode="text"
@@ -279,7 +250,7 @@ export default function Income() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-      
+
       <Portal>
         <Dialog visible={deleteDialogVisible} onDismiss={() => setDeleteDialogVisible(false)}>
           <Dialog.Title>Confirm Delete</Dialog.Title>
@@ -303,6 +274,7 @@ export default function Income() {
     </SafeAreaView>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {
@@ -530,12 +502,10 @@ const styles = StyleSheet.create({
     shadowColor: '#000', // For iOS shadow
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
- addButtonText: {
+    shadowRadius: 4,  },
+  addButtonText: {
     ...FONTS.h4,
     color: COLORS.gray,
-    fontWeight: '400',
-    
+    fontWeight: '600',
   },
 });

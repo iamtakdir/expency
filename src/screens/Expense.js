@@ -72,15 +72,10 @@ export default function Expense() {
     .filter(t => t.type === 'expense')
     .sort((a, b) => new Date(b.date) - new Date(a.date));
 
-  const AddExpenseButton = () => (
-    <TouchableOpacity 
-      style={styles.addButton} 
-      onPress={handleAddExpense}
-      activeOpacity={0.8}
-    >
-      <Text style={styles.addButtonText}>Add Expense</Text>
-    </TouchableOpacity>
-  );
+  const isAddDisabled = !amount || !description || !category;
+  const addButtonTextColor = isAddDisabled
+    ? COLORS.button.danger.text.disabled
+    : COLORS.button.danger.text.active;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -139,14 +134,12 @@ export default function Expense() {
                 mode="contained"
                 onPress={handleAddExpense}
                 style={styles.button}
-                disabled={!amount || !description || !category}
+                disabled={isAddDisabled}
                 buttonColor={COLORS.button.danger.active}
-                textColor={!amount || !description || !category ? COLORS.button.danger.text.disabled : COLORS.button.danger.text.active}
+                textColor={addButtonTextColor}
                 icon={editingTransaction ? "pencil" : "plus"}
               >
-                <Text style={
-                  styles.addButtonText
-                }>{editingTransaction ? 'Update Expense' : 'Add Expense'}</Text>
+                {editingTransaction ? 'Update Expense' : 'Add Expense'}
               </Button>
 
               {editingTransaction && (
@@ -278,8 +271,12 @@ export default function Expense() {
             )}
           </Dialog.Content>
           <Dialog.Actions>
-            <Button onPress={() => setDeleteDialogVisible(false)}>Cancel</Button>
-            <Button onPress={confirmDelete} textColor={COLORS.danger}>Delete</Button>
+            <Button onPress={() => setDeleteDialogVisible(false)}>
+              Cancel
+            </Button>
+            <Button onPress={confirmDelete} textColor={COLORS.danger}>
+              Delete
+            </Button>
           </Dialog.Actions>
         </Dialog>
       </Portal>
@@ -512,11 +509,9 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-  },
-  addButtonText: {
+  },  addButtonText: {
     ...FONTS.h4,
-    color: COLORS.gray,
-    fontWeight: '400',
-    
+    color: COLORS.gray ,
+    fontWeight: '600',
   },
 });
