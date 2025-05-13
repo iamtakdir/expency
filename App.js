@@ -2,11 +2,12 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import React, { useState } from 'react';
-import { Platform, SafeAreaView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useState } from 'react';
+import { ActivityIndicator, Platform, SafeAreaView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { PaperProvider } from 'react-native-paper';
 import { COLORS, FONTS } from './src/constants/theme';
+import { AuthProvider, useAuth } from './src/context/AuthContext';
 import { TransactionProvider } from './src/context/TransactionContext';
 
 // Import screens
@@ -21,6 +22,7 @@ const Tab = createBottomTabNavigator();
 
 function MainApp({ navigation }) {
   const [currentScreen, setCurrentScreen] = useState('Dashboard');
+  const { signOut } = useAuth();
 
   return (
     <SafeAreaView style={styles.container}>
@@ -29,11 +31,21 @@ function MainApp({ navigation }) {
         <Text style={styles.headerTitle}>{currentScreen}</Text>
         <TouchableOpacity 
           style={styles.logoutButton}
-          onPress={() => {
-            navigation.reset({
-              index: 0,
-              routes: [{ name: 'Login' }],
-            });
+          onPress={async () => {
+            try {
+              await signOut();
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'Login' }],
+              });
+            } catch (error) {
+              console.error('Logout error:', error);
+              // Still attempt to navigate to login screen even if signOut fails
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'Login' }],
+              });
+            }
           }}
         >
           <MaterialCommunityIcons name="logout" size={24} color={COLORS.danger} />
@@ -88,24 +100,54 @@ function MainApp({ navigation }) {
   );
 }
 
+// Loading screen while checking authentication
+function AuthLoadingScreen() {
+  const { loading } = useAuth();
+  
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.background }}>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+      </View>
+    );
+  }
+  
+  return null;
+}
+
+// App with Auth Provider
+function AppWithAuth() {
+  const { user, loading } = useAuth();
+  
+  if (loading) {
+    return <AuthLoadingScreen />;
+  }
+  
+  return (
+    <NavigationContainer>
+      <Stack.Navigator
+        initialRouteName={user ? "MainApp" : "Login"}
+        screenOptions={{
+          headerShown: false,
+        }}
+      >
+        <Stack.Screen name="Login" component={Login} />
+        <Stack.Screen name="Signup" component={Signup} />
+        <Stack.Screen name="MainApp" component={MainApp} />
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
+}
+
 export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <PaperProvider>
-        <TransactionProvider>
-          <NavigationContainer>
-            <Stack.Navigator
-              initialRouteName="Login"
-              screenOptions={{
-                headerShown: false,
-              }}
-            >
-              <Stack.Screen name="Login" component={Login} />
-              <Stack.Screen name="Signup" component={Signup} />
-              <Stack.Screen name="MainApp" component={MainApp} />
-            </Stack.Navigator>
-          </NavigationContainer>
-        </TransactionProvider>
+        <AuthProvider>
+          <TransactionProvider>
+            <AppWithAuth />
+          </TransactionProvider>
+        </AuthProvider>
       </PaperProvider>
     </GestureHandlerRootView>
   );
@@ -146,4 +188,4 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-}); 
+});

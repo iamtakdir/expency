@@ -2,6 +2,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import React, { useEffect, useRef, useState } from 'react';
 import {
+  ActivityIndicator,
   Animated,
   Dimensions,
   Platform,
@@ -15,6 +16,7 @@ import {
 } from 'react-native';
 import { FAB, ProgressBar, Surface, Text } from 'react-native-paper';
 import { BORDER_RADIUS, CATEGORIES, COLORS, FONTS, SHADOWS, SPACING } from '../constants/theme';
+import { useAuth } from '../context/AuthContext';
 import { useTransactions } from '../context/TransactionContext';
 
 const { width } = Dimensions.get('window');
@@ -23,7 +25,8 @@ const AnimatedSurface = Animated.createAnimatedComponent(Surface);
 
 export default function Dashboard() {
   const navigation = useNavigation();
-  const { transactions } = useTransactions();
+  const { user } = useAuth();
+  const { transactions, loading, fetchTransactions } = useTransactions();
   const [progressAnim] = useState(new Animated.Value(0));
   const [expandedSection, setExpandedSection] = useState('spending');
   const [refreshing, setRefreshing] = useState(false);
@@ -52,14 +55,16 @@ export default function Dashboard() {
       })
     ]).start();
   }, []);
-  
-  const onRefresh = React.useCallback(() => {
-    setRefreshing(true);
-    // Simulate a data refresh
-    setTimeout(() => {
+    const onRefresh = React.useCallback(async () => {
+    try {
+      setRefreshing(true);
+      await fetchTransactions();
+    } catch (error) {
+      console.error('Error refreshing transactions:', error);
+    } finally {
       setRefreshing(false);
-    }, 1500);
-  }, []);
+    }
+  }, [fetchTransactions]);
   // Calculate financial summaries
   const totalIncome = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
   const totalSpent = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
@@ -138,16 +143,7 @@ export default function Dashboard() {
         <View style={styles.header}>
           <View>
             <Text style={styles.greeting}>Hello,</Text>
-            <Text style={styles.name}>David</Text>
-          </View>
-          <View style={styles.headerActions}>
-            <TouchableOpacity style={styles.iconButton}>
-              <MaterialCommunityIcons name="bell-outline" size={24} color={COLORS.text} />
-              <View style={styles.notificationBadge} />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.avatarContainer}>
-              <MaterialCommunityIcons name="account" size={24} color={COLORS.white} />
-            </TouchableOpacity>
+            <Text style={styles.name}>{user?.email || ''}</Text>
           </View>
         </View>
 
@@ -267,168 +263,177 @@ export default function Dashboard() {
         {/* Main Content */}
         <View style={styles.contentContainer}>
           <Text style={styles.sectionTitle}>Overview</Text>
-
-          {/* Top Spending Categories */}
-          <AnimatedSurface 
-            style={[
-              styles.statsCard,
-              { 
-                opacity: fadeAnim,
-                transform: [{ translateY: translateY }]
-              }
-            ]}
-          >
-            <TouchableOpacity 
-              style={styles.sectionHeader}
-              onPress={() => setExpandedSection(expandedSection === 'spending' ? null : 'spending')}
-              activeOpacity={0.7}
-            >
-              <View style={styles.sectionHeaderContent}>
-                <View style={[styles.sectionIconContainer, { backgroundColor: COLORS.danger + '20' }]}>
-                  <MaterialCommunityIcons name="chart-pie" size={20} color={COLORS.danger} />
-                </View>
-                <Text style={styles.statsCardTitle}>Top Spending Categories</Text>
-              </View>
-              <MaterialCommunityIcons 
-                name={expandedSection === 'spending' ? "chevron-up" : "chevron-down"} 
-                size={24} 
-                color={COLORS.textLight} 
-              />
-            </TouchableOpacity>
-            
-            {expandedSection === 'spending' && (
-              <View style={styles.statsContent}>
-                <View style={styles.categoriesList}>
-                  {topCategories.length > 0 ? (
-                    topCategories.map((item, index) => (
-                      <View key={item.category} style={styles.categoryItem}>
-                        <View style={styles.categoryHeader}>
-                          <View style={styles.categoryNameContainer}>
-                            <View style={[
-                              styles.categoryIcon, 
-                              { backgroundColor: getCategoryColor(item.category, index) + '20' }
-                            ]}>
-                              <MaterialCommunityIcons 
-                                name={CATEGORIES[item.category]?.icon || 'cash-minus'} 
-                                size={16} 
-                                color={getCategoryColor(item.category, index)} 
-                              />
-                            </View>
-                            <Text style={styles.categoryName}>{CATEGORIES[item.category]?.label || item.category}</Text>
-                          </View>
-                          <Text style={styles.categoryPercentage}>${item.amount.toFixed(2)}</Text>
-                        </View>
-                        <View style={styles.categoryProgressContainer}>
-                          <AnimatedProgressBar 
-                            progress={progressAnim.interpolate({
-                              inputRange: [0, 1],
-                              outputRange: [0, item.percentage / 100]
-                            })}
-                            color={getCategoryColor(item.category, index)} 
-                            style={styles.categoryProgress} 
-                          />
-                          <Text style={styles.categoryPercentageSmall}>{item.percentage.toFixed(1)}%</Text>
-                        </View>
-                      </View>
-                    ))
-                  ) : (
-                    <View style={styles.emptyCategories}>
-                      <MaterialCommunityIcons name="chart-arc" size={36} color={COLORS.textLight} />
-                      <Text style={styles.emptyCategoriesText}>No expense data yet</Text>
-                    </View>
-                  )}
-                </View>
-              </View>
-            )}
-          </AnimatedSurface>
           
-          {/* Recent Transactions */}
-          <AnimatedSurface 
-            style={[
-              styles.statsCard,
-              { 
-                opacity: fadeAnim,
-                transform: [{ translateY: translateY }]
-              }
-            ]}
-          >
-            <TouchableOpacity 
-              style={styles.sectionHeader}
-              onPress={() => setExpandedSection(expandedSection === 'transactions' ? null : 'transactions')}
-              activeOpacity={0.7}
-            >
-              <View style={styles.sectionHeaderContent}>
-                <View style={[styles.sectionIconContainer, { backgroundColor: COLORS.primary + '20' }]}>
-                  <MaterialCommunityIcons name="swap-horizontal" size={20} color={COLORS.primary} />
-                </View>
-                <Text style={styles.statsCardTitle}>Recent Transactions</Text>
-              </View>
-              <MaterialCommunityIcons 
-                name={expandedSection === 'transactions' ? "chevron-up" : "chevron-down"} 
-                size={24} 
-                color={COLORS.textLight} 
-              />
-            </TouchableOpacity>
-            
-            {expandedSection === 'transactions' && (
-              <View style={styles.transactionsContainer}>
-                {recentTransactions.length === 0 ? (
-                  <View style={styles.emptyTransactions}>
-                    <MaterialCommunityIcons name="currency-usd-off" size={36} color={COLORS.textLight} />
-                    <Text style={styles.emptyTransactionsText}>No transactions yet</Text>
+          {loading && !refreshing ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color={COLORS.primary} />
+              <Text style={styles.loadingText}>Loading your financial data...</Text>
+            </View>
+          ) : (
+            <>
+              {/* Top Spending Categories */}
+              <AnimatedSurface 
+                style={[
+                  styles.statsCard,
+                  { 
+                    opacity: fadeAnim,
+                    transform: [{ translateY: translateY }]
+                  }
+                ]}
+              >
+                <TouchableOpacity 
+                  style={styles.sectionHeader}
+                  onPress={() => setExpandedSection(expandedSection === 'spending' ? null : 'spending')}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.sectionHeaderContent}>
+                    <View style={[styles.sectionIconContainer, { backgroundColor: COLORS.danger + '20' }]}>
+                      <MaterialCommunityIcons name="chart-pie" size={20} color={COLORS.danger} />
+                    </View>
+                    <Text style={styles.statsCardTitle}>Top Spending Categories</Text>
                   </View>
-                ) : (
-                  recentTransactions.map((transaction, index) => (
-                    <TouchableOpacity 
-                      key={transaction.id} 
-                      style={[
-                        styles.transactionItem, 
-                        index !== recentTransactions.length - 1 && styles.transactionItemBorder
-                      ]}
-                    >
-                      <View style={styles.transactionLeftContent}>
-                        <View style={[
-                          styles.transactionIcon,
-                          { backgroundColor: CATEGORIES[transaction.category]?.color || 
-                            (transaction.type === 'income' ? COLORS.success : COLORS.danger) }
-                        ]}>
-                          <MaterialCommunityIcons
-                            name={CATEGORIES[transaction.category]?.icon || (transaction.type === 'income' ? 'cash-plus' : 'cash-minus')}
-                            size={20}
-                            color={COLORS.white}
-                          />
+                  <MaterialCommunityIcons 
+                    name={expandedSection === 'spending' ? "chevron-up" : "chevron-down"} 
+                    size={24} 
+                    color={COLORS.textLight} 
+                  />
+                </TouchableOpacity>
+                
+                {expandedSection === 'spending' && (
+                  <View style={styles.statsContent}>
+                    <View style={styles.categoriesList}>
+                      {topCategories.length > 0 ? (
+                        topCategories.map((item, index) => (
+                          <View key={item.category} style={styles.categoryItem}>
+                            <View style={styles.categoryHeader}>
+                              <View style={styles.categoryNameContainer}>
+                                <View style={[
+                                  styles.categoryIcon, 
+                                  { backgroundColor: getCategoryColor(item.category, index) + '20' }
+                                ]}>
+                                  <MaterialCommunityIcons 
+                                    name={CATEGORIES[item.category]?.icon || 'cash-minus'} 
+                                    size={16} 
+                                    color={getCategoryColor(item.category, index)} 
+                                  />
+                                </View>
+                                <Text style={styles.categoryName}>{CATEGORIES[item.category]?.label || item.category}</Text>
+                              </View>
+                              <Text style={styles.categoryPercentage}>${item.amount.toFixed(2)}</Text>
+                            </View>
+                            <View style={styles.categoryProgressContainer}>
+                              <AnimatedProgressBar 
+                                progress={progressAnim.interpolate({
+                                  inputRange: [0, 1],
+                                  outputRange: [0, item.percentage / 100]
+                                })}
+                                color={getCategoryColor(item.category, index)} 
+                                style={styles.categoryProgress} 
+                              />
+                              <Text style={styles.categoryPercentageSmall}>{item.percentage.toFixed(1)}%</Text>
+                            </View>
+                          </View>
+                        ))
+                      ) : (
+                        <View style={styles.emptyCategories}>
+                          <MaterialCommunityIcons name="chart-arc" size={36} color={COLORS.textLight} />
+                          <Text style={styles.emptyCategoriesText}>No expense data yet</Text>
                         </View>
-                        <View style={styles.transactionDetails}>
-                          <Text style={styles.transactionTitle}>{transaction.description}</Text>
-                          <Text style={styles.transactionCategory}>
-                            {CATEGORIES[transaction.category]?.label || transaction.category}
-                          </Text>
-                        </View>
+                      )}
+                    </View>
+                  </View>
+                )}
+              </AnimatedSurface>
+              
+              {/* Recent Transactions */}
+              <AnimatedSurface 
+                style={[
+                  styles.statsCard,
+                  { 
+                    opacity: fadeAnim,
+                    transform: [{ translateY: translateY }]
+                  }
+                ]}
+              >
+                <TouchableOpacity 
+                  style={styles.sectionHeader}
+                  onPress={() => setExpandedSection(expandedSection === 'transactions' ? null : 'transactions')}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.sectionHeaderContent}>
+                    <View style={[styles.sectionIconContainer, { backgroundColor: COLORS.primary + '20' }]}>
+                      <MaterialCommunityIcons name="swap-horizontal" size={20} color={COLORS.primary} />
+                    </View>
+                    <Text style={styles.statsCardTitle}>Recent Transactions</Text>
+                  </View>
+                  <MaterialCommunityIcons 
+                    name={expandedSection === 'transactions' ? "chevron-up" : "chevron-down"} 
+                    size={24} 
+                    color={COLORS.textLight} 
+                  />
+                </TouchableOpacity>
+                
+                {expandedSection === 'transactions' && (
+                  <View style={styles.transactionsContainer}>
+                    {recentTransactions.length === 0 ? (
+                      <View style={styles.emptyTransactions}>
+                        <MaterialCommunityIcons name="currency-usd-off" size={36} color={COLORS.textLight} />
+                        <Text style={styles.emptyTransactionsText}>No transactions yet</Text>
                       </View>
-                      <View style={styles.transactionRightContent}>
-                        <Text
+                    ) : (
+                      recentTransactions.map((transaction, index) => (
+                        <TouchableOpacity 
+                          key={transaction.id} 
                           style={[
-                            styles.transactionAmount,
-                            { color: transaction.type === 'income' ? COLORS.success : COLORS.danger }
+                            styles.transactionItem, 
+                            index !== recentTransactions.length - 1 && styles.transactionItemBorder
                           ]}
                         >
-                          {transaction.type === 'income' ? '+' : '-'}${transaction.amount.toFixed(2)}
-                        </Text>
-                        <Text style={styles.transactionDate}>{formatDate(transaction.date)}</Text>
-                      </View>
-                    </TouchableOpacity>
-                  ))
+                          <View style={styles.transactionLeftContent}>
+                            <View style={[
+                              styles.transactionIcon,
+                              { backgroundColor: CATEGORIES[transaction.category]?.color || 
+                                (transaction.type === 'income' ? COLORS.success : COLORS.danger) }
+                            ]}>
+                              <MaterialCommunityIcons
+                                name={CATEGORIES[transaction.category]?.icon || (transaction.type === 'income' ? 'cash-plus' : 'cash-minus')}
+                                size={20}
+                                color={COLORS.white}
+                              />
+                            </View>
+                            <View style={styles.transactionDetails}>
+                              <Text style={styles.transactionTitle}>{transaction.title}</Text>
+                              <Text style={styles.transactionCategory}>
+                                {CATEGORIES[transaction.category]?.label || transaction.category}
+                              </Text>
+                            </View>
+                          </View>
+                          <View style={styles.transactionRightContent}>
+                            <Text
+                              style={[
+                                styles.transactionAmount,
+                                { color: transaction.type === 'income' ? COLORS.success : COLORS.danger }
+                              ]}
+                            >
+                              {transaction.type === 'income' ? '+' : '-'}${transaction.amount.toFixed(2)}
+                            </Text>
+                            <Text style={styles.transactionDate}>{formatDate(transaction.date)}</Text>
+                          </View>
+                        </TouchableOpacity>
+                      ))
+                    )}
+                    
+                    {recentTransactions.length > 0 && (
+                      <TouchableOpacity style={styles.viewAllContainer} onPress={() => {}}>
+                        <Text style={styles.viewAllText}>View All Transactions</Text>
+                        <MaterialCommunityIcons name="arrow-right" size={16} color={COLORS.primary} />
+                      </TouchableOpacity>
+                    )}
+                  </View>
                 )}
-                
-                {recentTransactions.length > 0 && (
-                  <TouchableOpacity style={styles.viewAllContainer} onPress={() => {}}>
-                    <Text style={styles.viewAllText}>View All Transactions</Text>
-                    <MaterialCommunityIcons name="arrow-right" size={16} color={COLORS.primary} />
-                  </TouchableOpacity>
-                )}
-              </View>
-            )}
-          </AnimatedSurface>
+              </AnimatedSurface>
+            </>
+          )}
         </View>
       </ScrollView>
       
@@ -487,33 +492,6 @@ const styles = StyleSheet.create({
     ...FONTS.h1,
     color: COLORS.text,
     marginTop: SPACING.xs,
-  },
-  headerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  iconButton: {
-    padding: SPACING.s,
-    marginRight: SPACING.s,
-    position: 'relative',
-  },
-  notificationBadge: {
-    position: 'absolute',
-    top: SPACING.s,
-    right: SPACING.s,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: COLORS.danger,
-  },
-  avatarContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: COLORS.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...SHADOWS.small,
   },
   
   // Balance Card Styles
@@ -837,11 +815,35 @@ const styles = StyleSheet.create({
     elevation: 6,
     flex: 1,
   },
+  loadingContainer: {
+    padding: SPACING.xl,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.white,
+    borderRadius: BORDER_RADIUS.l,
+    ...SHADOWS.small,
+    marginVertical: SPACING.m,
+  },
+  loadingText: {
+    ...FONTS.body,
+    color: COLORS.textLight,
+    marginTop: SPACING.m,
+  },
   
   // Section Titles
   sectionTitle: {
     ...FONTS.h2,
     color: COLORS.text,
     marginBottom: SPACING.s,
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: SPACING.l,
+  },
+  loadingText: {
+    ...FONTS.body,
+    color: COLORS.textLight,
+    marginTop: SPACING.s,
   },
 });

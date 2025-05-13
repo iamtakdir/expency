@@ -1,50 +1,76 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Button, Dialog, Paragraph, Portal, Surface, Text, TextInput } from 'react-native-paper';
 import CategoryPicker from '../components/CategoryPicker';
 import { BORDER_RADIUS, CATEGORIES, COLORS, FONTS, SHADOWS, SPACING } from '../constants/theme';
+import { useAuth } from '../context/AuthContext';
 import { useTransactions } from '../context/TransactionContext';
 
 export default function Expense() {
-  const { addTransaction, updateTransaction, deleteTransaction, transactions } = useTransactions();
+  const { addTransaction, updateTransaction, deleteTransaction, transactions, loading } = useTransactions();
+  const { user } = useAuth();
+  const navigation = useNavigation();
   const [amount, setAmount] = useState('');
-  const [description, setDescription] = useState('');
+  const [title, setTitle] = useState('');
   const [category, setCategory] = useState('');
   const [editingTransaction, setEditingTransaction] = useState(null);
   const [deleteDialogVisible, setDeleteDialogVisible] = useState(false);
   const [transactionToDelete, setTransactionToDelete] = useState(null);
   const [expandedActionId, setExpandedActionId] = useState(null);
-  const handleAddExpense = () => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+
+  const handleAddExpense = async () => {
     if (!amount || !category) return;
-
-    if (editingTransaction) {
-      updateTransaction(editingTransaction.id, {
-        ...editingTransaction,
-        amount: parseFloat(amount),
-        description,
-        category,
-      });
-      setEditingTransaction(null);
-    } else {
-      addTransaction({
-        type: 'expense',
-        amount: parseFloat(amount),
-        description,
-        category,
-        date: new Date().toISOString(),
-      });
+    if (isNaN(amount) || parseFloat(amount) <= 0) {
+      setErrorMessage('Amount must be a positive number');
+      return;
     }
-
-    setAmount('');
-    setDescription('');
-    setCategory('');
+    if (!user) {
+      setErrorMessage('You need to be logged in to add expenses');
+      Alert.alert('Error', 'You need to be logged in to add expenses');
+      return;
+    }
+    try {
+      setIsSubmitting(true);
+      setErrorMessage('');
+      if (editingTransaction) {
+        await updateTransaction('expense', editingTransaction.id, {
+          amount: parseFloat(amount),
+          title,
+          category,
+        });
+        setEditingTransaction(null);
+      } else {
+        const expenseData = {
+          amount: parseFloat(amount),
+          title,
+          category,
+          date: new Date().toISOString(),
+        };
+        const result = await addTransaction('expense', expenseData);
+        if (result && result.error) {
+          setErrorMessage(result.error.message || result.error.toString() || 'Failed to save expense');
+          Alert.alert('Error', result.error.message || result.error.toString() || 'Failed to save expense');
+        }
+      }
+      setAmount('');
+      setTitle('');
+      setCategory('');
+    } catch (error) {
+      setErrorMessage(error.message || 'Failed to save expense');
+      Alert.alert('Error', error.message || 'Failed to save expense');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleEditPress = (transaction) => {
     setExpandedActionId(null);
     setAmount(transaction.amount.toString());
-    setDescription(transaction.description);
+    setTitle(transaction.title);
     setCategory(transaction.category);
     setEditingTransaction(transaction);
   };
@@ -54,12 +80,18 @@ export default function Expense() {
     setTransactionToDelete(transaction);
     setDeleteDialogVisible(true);
   };
-
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (transactionToDelete) {
-      deleteTransaction(transactionToDelete.id);
-      setTransactionToDelete(null);
-      setDeleteDialogVisible(false);
+      try {
+        setIsSubmitting(true);
+        await deleteTransaction('expense', transactionToDelete.id);
+      } catch (error) {
+        Alert.alert('Error', error.message || 'Failed to delete expense');
+      } finally {
+        setTransactionToDelete(null);
+        setDeleteDialogVisible(false);
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -74,6 +106,8 @@ export default function Expense() {
   const addButtonTextColor = isAddDisabled
     ? COLORS.button.danger.text.disabled
     : COLORS.button.danger.text.active;
+
+  const showCancel = !editingTransaction && (amount !== '' || title !== '' || category !== '');
 
   return (
     <SafeAreaView style={styles.container}>
@@ -91,6 +125,9 @@ export default function Expense() {
                 {editingTransaction ? 'Edit Expense' : 'New Expense'}
               </Text>
             </View>
+            
+            {/* Error message rendering */}
+            {errorMessage ? <Text style={{ color: COLORS.danger, marginBottom: 8 }}>{errorMessage}</Text> : null}
             
             <View style={styles.amountContainer}>
               <Text style={[styles.currencySymbol, { color: COLORS.danger }]}>$</Text>
@@ -116,15 +153,14 @@ export default function Expense() {
             />
 
             <TextInput
-              label="Description"
-              value={description}
-              onChangeText={setDescription}
+              label="Title"
+              value={title}
+              onChangeText={setTitle}
               style={styles.input}
               mode="outlined"
               outlineColor={COLORS.border}
               activeOutlineColor={COLORS.danger}
               textColor={COLORS.text}
-              left={<TextInput.Icon icon="text" color={COLORS.textLight} />}
             />
 
             <View style={styles.buttonContainer}>
@@ -132,21 +168,34 @@ export default function Expense() {
                 mode="contained"
                 onPress={handleAddExpense}
                 style={styles.button}
-                disabled={isAddDisabled}
                 buttonColor={COLORS.button.danger.active}
-                textColor={addButtonTextColor}
+                textColor={COLORS.button.danger.text.active}
                 icon={editingTransaction ? "pencil" : "plus"}
               >
-                {editingTransaction ? 'Update Expense' : 'Add Expense'}
+                {isSubmitting ? <ActivityIndicator color={COLORS.white} /> : (editingTransaction ? 'Update Expense' : 'Add Expense')}
               </Button>
-
+              {showCancel && (
+                <Button
+                  mode="outlined"
+                  onPress={() => {
+                    setAmount('');
+                    setTitle('');
+                    setCategory('');
+                  }}
+                  style={[styles.button, { marginTop: 8 }]}
+                  textColor={COLORS.danger}
+                  icon="close"
+                >
+                  Cancel
+                </Button>
+              )}
               {editingTransaction && (
                 <Button
                   mode="outlined"
                   onPress={() => {
                     setEditingTransaction(null);
                     setAmount('');
-                    setDescription('');
+                    setTitle('');
                     setCategory('');
                   }}
                   style={styles.cancelButton}
@@ -166,17 +215,21 @@ export default function Expense() {
                 {expenseTransactions.length} {expenseTransactions.length === 1 ? 'transaction' : 'transactions'}
               </Text>
             </View>
-            
-            {expenseTransactions.length === 0 ? (
+              {loading ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color={COLORS.primary} />
+                <Text style={styles.loadingText}>Loading expenses...</Text>
+              </View>
+            ) : expenseTransactions.length === 0 ? (
               <Surface style={styles.emptyState}>
                 <MaterialCommunityIcons name="cash-remove" size={48} color={COLORS.textLight} />
                 <Text style={styles.emptyStateText}>No expenses yet</Text>
                 <Text style={styles.emptyStateSubtext}>Add your first expense above</Text>
               </Surface>
-            ) : (
+            ) :(
               expenseTransactions.slice(0, 5).map((transaction, index) => (
                 <Surface 
-                  key={transaction.id} 
+                  key={`${transaction.type}-${transaction.id}`}
                   style={[
                     styles.transactionCard, 
                     { marginBottom: index === expenseTransactions.length - 1 ? SPACING.xl : SPACING.m }
@@ -198,7 +251,7 @@ export default function Expense() {
                       />
                     </View>
                     <View style={styles.transactionInfo}>
-                      <Text style={styles.transactionTitle}>{transaction.description}</Text>
+                      <Text style={styles.transactionTitle}>{transaction.title}</Text>
                       <View style={styles.transactionMeta}>
                         <MaterialCommunityIcons name="clock-outline" size={14} color={COLORS.textLight} />
                         <Text style={styles.transactionDate}>
@@ -261,7 +314,7 @@ export default function Expense() {
             <Paragraph>Are you sure you want to delete this expense?</Paragraph>
             {transactionToDelete && (
               <View style={styles.dialogTransactionPreview}>
-                <Text style={styles.dialogTransactionTitle}>{transactionToDelete.description}</Text>
+                <Text style={styles.dialogTransactionTitle}>{transactionToDelete.title}</Text>
                 <Text style={styles.dialogTransactionAmount}>
                   ${parseFloat(transactionToDelete.amount).toFixed(2)}
                 </Text>
@@ -511,5 +564,15 @@ const styles = StyleSheet.create({
     ...FONTS.h4,
     color: COLORS.gray ,
     fontWeight: '600',
+  },
+  loadingContainer: {
+    paddingVertical: SPACING.xl,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loadingText: {
+    ...FONTS.body,
+    color: COLORS.textLight,
+    marginTop: SPACING.m,
   },
 });

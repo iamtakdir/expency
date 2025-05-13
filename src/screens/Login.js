@@ -1,19 +1,48 @@
 import { useState } from 'react';
-import { SafeAreaView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, SafeAreaView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Button, Surface, Text, TextInput } from 'react-native-paper';
 import { BORDER_RADIUS, COLORS, FONTS, SHADOWS, SPACING } from '../constants/theme';
+import { useAuth } from '../context/AuthContext';
 
 export default function Login({ navigation }) {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const { signIn } = useAuth();
 
-  const handleLogin = () => {
-    if (username && password) {
-      // Demo login - no actual authentication
+  const handleLogin = async () => {
+    if (!email || !password) {
+      setErrorMessage('Please fill in all fields');
+      Alert.alert('Error', 'Please fill in all fields');
+      return;
+    }
+    
+    if (!email.includes('@')) {
+      setErrorMessage('Please enter a valid email');
+      Alert.alert('Error', 'Please enter a valid email');
+      return;
+    }
+    
+    try {
+      setIsLoading(true);
+      setErrorMessage('');
+      const { error } = await signIn({ email, password });
+      if (error) {
+        setErrorMessage(error);
+        Alert.alert('Login Failed', error);
+        return;
+      }
+      // On successful login, AuthContext will handle session
       navigation.reset({
         index: 0,
         routes: [{ name: 'MainApp' }],
       });
+    } catch (error) {
+      setErrorMessage(error.message || 'Please check your credentials');
+      Alert.alert('Login Failed', error.message || 'Please check your credentials');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -24,10 +53,14 @@ export default function Login({ navigation }) {
         <Text style={styles.subtitle}>Sign in to continue</Text>
 
         <Surface style={styles.formCard}>
+          {/* Error message rendering */}
+          {errorMessage ? <Text style={{ color: COLORS.danger, marginBottom: 8 }}>{errorMessage}</Text> : null}
           <TextInput
-            label="Username"
-            value={username}
-            onChangeText={setUsername}
+            label="Email"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
             style={styles.input}
             mode="outlined"
             outlineColor={COLORS.border}
@@ -55,15 +88,20 @@ export default function Login({ navigation }) {
                 onSurfaceVariant: COLORS.textLight,
               },
             }}
-          />
-
-          <TouchableOpacity 
-            style={styles.button} 
-            onPress={handleLogin}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.buttonText}>Sign In</Text>
-          </TouchableOpacity>
+          />          {isLoading ? (
+            <View style={styles.button}>
+              <ActivityIndicator color={COLORS.white} />
+            </View>
+          ) : (
+            <TouchableOpacity 
+              style={styles.button} 
+              onPress={handleLogin}
+              activeOpacity={0.8}
+              disabled={isLoading}
+            >
+              <Text style={styles.buttonText}>Sign In</Text>
+            </TouchableOpacity>
+          )}
 
           <View style={styles.footer}>
             <Text style={styles.footerText}>Don't have an account? </Text>

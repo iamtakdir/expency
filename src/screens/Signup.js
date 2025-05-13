@@ -1,20 +1,62 @@
 import { useState } from 'react';
-import { SafeAreaView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, SafeAreaView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Button, Surface, Text, TextInput } from 'react-native-paper';
 import { BORDER_RADIUS, COLORS, FONTS, SHADOWS, SPACING } from '../constants/theme';
+import { useAuth } from '../context/AuthContext';
 
 export default function Signup({ navigation }) {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const { signUp } = useAuth();
 
-  const handleSignup = () => {
-    if (username && password && password === confirmPassword) {
-      // Demo signup - no actual registration
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'MainApp' }],
-      });
+  const handleSignup = async () => {
+    if (!email || !password || !confirmPassword) {
+      setErrorMessage('Please fill in all fields');
+      Alert.alert('Error', 'Please fill in all fields');
+      return;
+    }
+    
+    if (!email.includes('@')) {
+      setErrorMessage('Please enter a valid email');
+      Alert.alert('Error', 'Please enter a valid email');
+      return;
+    }
+    
+    if (password !== confirmPassword) {
+      setErrorMessage('Passwords do not match');
+      Alert.alert('Error', 'Passwords do not match');
+      return;
+    }
+    
+    if (password.length < 6) {
+      setErrorMessage('Password must be at least 6 characters');
+      Alert.alert('Error', 'Password must be at least 6 characters');
+      return;
+    }
+    
+    try {
+      setIsLoading(true);
+      setErrorMessage('');
+      const { error, data } = await signUp({ email, password });
+      console.log('Signup result:', { error, data });
+      if (error) {
+        setErrorMessage(error);
+        Alert.alert('Sign Up Failed', error);
+        return;
+      }
+      Alert.alert(
+        'Success',
+        'Account created successfully! Please check your email for verification.',
+        [{ text: 'OK', onPress: () => navigation.navigate('Login') }]
+      );
+    } catch (error) {
+      setErrorMessage(error.message);
+      Alert.alert('Sign Up Failed', error.message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -25,10 +67,14 @@ export default function Signup({ navigation }) {
         <Text style={styles.subtitle}>Sign up to get started</Text>
 
         <Surface style={styles.formCard}>
+          {/* Error message rendering */}
+          {errorMessage ? <Text style={{ color: COLORS.danger, marginBottom: 8 }}>{errorMessage}</Text> : null}
           <TextInput
-            label="Username"
-            value={username}
-            onChangeText={setUsername}
+            label="Email"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
             style={styles.input}
             mode="outlined"
             outlineColor={COLORS.border}
@@ -74,15 +120,20 @@ export default function Signup({ navigation }) {
               },
             }}
             error={password && confirmPassword && password !== confirmPassword}
-          />
-
-          <TouchableOpacity 
-            style={styles.button} 
-            onPress={handleSignup}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.buttonText}>Sign Up</Text>
-          </TouchableOpacity>
+          />          {isLoading ? (
+            <View style={styles.button}>
+              <ActivityIndicator color={COLORS.white} />
+            </View>
+          ) : (
+            <TouchableOpacity 
+              style={styles.button} 
+              onPress={handleSignup}
+              activeOpacity={0.8}
+              disabled={isLoading}
+            >
+              <Text style={styles.buttonText}>Sign Up</Text>
+            </TouchableOpacity>
+          )}
 
           <View style={styles.footer}>
             <Text style={styles.footerText}>Already have an account? </Text>
