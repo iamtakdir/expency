@@ -10,6 +10,10 @@ export const COLORS = {
   background: '#F5F7FF',
   card: '#FFFFFF',
   border: '#E5E5E5',
+  disabled: {
+    background: '#E2E8F0',  // Grayish background for disabled state
+    text: '#64748B',      // Dark gray text for disabled state
+  },
   gradient: {
     primary: ['#4169E1', '#5C85E8'],
     success: ['#2ecc71', '#27ae60'],

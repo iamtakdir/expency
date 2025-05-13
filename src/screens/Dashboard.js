@@ -120,7 +120,7 @@ export default function Dashboard() {
             </Surface>
           ))}
         </View>
-      </ScrollView>
+    </ScrollView>
     </SafeAreaView>
   );
 }
@@ -265,4 +265,4 @@ const styles = StyleSheet.create({
   transactionAmount: {
     ...FONTS.h2,
   },
-}); 
+});

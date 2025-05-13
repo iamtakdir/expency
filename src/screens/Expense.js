@@ -78,8 +78,8 @@ export default function Expense() {
             onPress={handleAddExpense}
             style={styles.button}
             disabled={!amount || !description || !category}
-            buttonColor={COLORS.danger}
-            textColor={COLORS.white}
+            buttonColor={!amount || !description || !category ? COLORS.disabled.background : COLORS.danger}
+            textColor={!amount || !description || !category ? COLORS.disabled.text : COLORS.white}
           >
             Add Expense
           </Button>

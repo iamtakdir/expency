@@ -1,11 +1,12 @@
-import { createDrawerNavigator } from '@react-navigation/drawer';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import React from 'react';
-import { Dimensions, StyleSheet, View } from 'react-native';
+import React, { useState } from 'react';
+import { Platform, SafeAreaView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { Button, Divider, PaperProvider, Text } from 'react-native-paper';
-import { COLORS, FONTS, SPACING } from './src/constants/theme';
+import { PaperProvider } from 'react-native-paper';
+import { COLORS, FONTS } from './src/constants/theme';
 import { TransactionProvider } from './src/context/TransactionContext';
 
 // Import screens
@@ -16,131 +17,76 @@ import Login from './src/screens/Login';
 import Signup from './src/screens/Signup';
 
 const Stack = createNativeStackNavigator();
-const Drawer = createDrawerNavigator();
-const { width } = Dimensions.get('window');
+const Tab = createBottomTabNavigator();
 
-function CustomDrawerContent({ navigation }) {
-  const drawerItems = [
-    { name: 'Dashboard', icon: 'view-dashboard' },
-    { name: 'Income', icon: 'cash-plus' },
-    { name: 'Expense', icon: 'cash-minus' },
-  ];
+function MainApp({ navigation }) {
+  const [currentScreen, setCurrentScreen] = useState('Dashboard');
 
   return (
-    <View style={styles.drawerContainer}>
-      <View style={styles.drawerHeader}>
-        <Text style={styles.drawerTitle}>Expancy</Text>
-      </View>
-      <View style={styles.drawerContent}>
-        {drawerItems.map((item) => (
-          <Button
-            key={item.name}
-            mode="text"
-            icon={item.icon}
-            onPress={() => navigation.navigate(item.name)}
-            style={styles.drawerItem}
-            labelStyle={styles.drawerItemLabel}
-            textColor={COLORS.text}
-          >
-            {item.name}
-          </Button>
-        ))}
-      </View>
-      <Divider />
-      <View style={styles.logoutContainer}>
-        <Button
-          mode="outlined"
-          icon="logout"
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.white} />
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>{currentScreen}</Text>
+        <TouchableOpacity 
+          style={styles.logoutButton}
           onPress={() => {
             navigation.reset({
               index: 0,
               routes: [{ name: 'Login' }],
             });
           }}
-          style={styles.logoutButton}
-          textColor={COLORS.danger}
         >
-          Logout
-        </Button>
+          <MaterialCommunityIcons name="logout" size={24} color={COLORS.danger} />
+        </TouchableOpacity>
       </View>
-    </View>
+      
+      <Tab.Navigator
+        screenOptions={({ route }) => ({
+          headerShown: false,
+          tabBarStyle: styles.tabBar,
+          tabBarShowLabel: false,
+          tabBarActiveTintColor: COLORS.primary,
+          tabBarInactiveTintColor: '#64748B',
+          tabBarIcon: ({ focused, color, size }) => {
+            let iconName;
+
+            switch (route.name) {
+              case 'Dashboard':
+                iconName = 'home';
+                break;
+              case 'Income':
+                iconName = 'chart-timeline-variant';
+                break;
+              case 'Expense':
+                iconName = 'wallet';
+                break;
+            }
+
+            return (
+              <View style={styles.tabItemContainer}>
+                <MaterialCommunityIcons 
+                  name={iconName} 
+                  size={24} 
+                  color={focused ? COLORS.primary : '#64748B'} 
+                />
+              </View>
+            );
+          },
+        })}
+        screenListeners={{
+          state: (e) => {
+            const currentRouteName = e.data.state.routes[e.data.state.index].name;
+            setCurrentScreen(currentRouteName);
+          },
+        }}
+      >
+        <Tab.Screen name="Dashboard" component={Dashboard} />
+        <Tab.Screen name="Income" component={Income} />
+        <Tab.Screen name="Expense" component={Expense} />
+      </Tab.Navigator>
+    </SafeAreaView>
   );
 }
-
-function MainApp() {
-  return (
-    <Drawer.Navigator
-      initialRouteName="Dashboard"
-      screenOptions={{
-        headerStyle: {
-          backgroundColor: COLORS.white,
-        },
-        headerTintColor: COLORS.text,
-        drawerStyle: {
-          width: Math.min(width * 0.7, 300),
-        },
-      }}
-      drawerContent={(props) => <CustomDrawerContent {...props} />}
-    >
-      <Drawer.Screen 
-        name="Dashboard" 
-        component={Dashboard}
-        options={{
-          headerTitle: 'Dashboard',
-        }}
-      />
-      <Drawer.Screen 
-        name="Income" 
-        component={Income}
-        options={{
-          headerTitle: 'Add Income',
-        }}
-      />
-      <Drawer.Screen 
-        name="Expense" 
-        component={Expense}
-        options={{
-          headerTitle: 'Add Expense',
-        }}
-      />
-    </Drawer.Navigator>
-  );
-}
-
-const styles = StyleSheet.create({
-  drawerContainer: {
-    flex: 1,
-    backgroundColor: COLORS.white,
-  },
-  drawerHeader: {
-    padding: SPACING.l,
-    backgroundColor: COLORS.primary,
-  },
-  drawerTitle: {
-    ...FONTS.h1,
-    color: COLORS.white,
-  },
-  drawerContent: {
-    flex: 1,
-    paddingTop: SPACING.m,
-  },
-  drawerItem: {
-    marginHorizontal: SPACING.s,
-    marginVertical: SPACING.xs,
-    borderRadius: 8,
-  },
-  drawerItemLabel: {
-    ...FONTS.body,
-  },
-  logoutContainer: {
-    padding: SPACING.m,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.border,
-  },
-  logoutButton: {
-    borderColor: COLORS.danger,
-  },
-});
 
 export default function App() {
   return (
@@ -163,4 +109,41 @@ export default function App() {
       </PaperProvider>
     </GestureHandlerRootView>
   );
-} 
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: COLORS.white,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: COLORS.white,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  headerTitle: {
+    ...FONTS.h2,
+    color: COLORS.text,
+  },
+  logoutButton: {
+    padding: 8,
+  },
+  tabBar: {
+    height: Platform.OS === 'ios' ? 80 : 60,
+    backgroundColor: COLORS.white,
+    borderTopWidth: 1,
+    borderTopColor: '#F3F4F6',
+    paddingBottom: Platform.OS === 'ios' ? 24 : 8,
+    paddingTop: 8,
+  },
+  tabItemContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+}); 

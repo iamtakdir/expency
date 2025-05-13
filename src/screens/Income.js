@@ -77,8 +77,8 @@ export default function Income() {
             onPress={handleAddIncome}
             style={styles.button}
             disabled={!amount || !description || !category}
-            buttonColor={COLORS.success}
-            textColor={COLORS.white}
+            buttonColor={!amount || !description || !category ? COLORS.disabled.background : COLORS.success}
+            textColor={!amount || !description || !category ? COLORS.disabled.text : COLORS.white}
           >
             Add Income
           </Button>
