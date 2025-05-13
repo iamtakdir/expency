@@ -1,6 +1,6 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import React, { useState } from 'react';
-import { SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { useState } from 'react';
+import { KeyboardAvoidingView, Platform, SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Button, Dialog, Paragraph, Portal, Surface, Text, TextInput } from 'react-native-paper';
 import CategoryPicker from '../components/CategoryPicker';
 import { BORDER_RADIUS, CATEGORIES, COLORS, FONTS, SHADOWS, SPACING } from '../constants/theme';
@@ -86,179 +86,199 @@ export default function Income() {
     .filter(t => t.type === 'income')
     .sort((a, b) => new Date(b.date) - new Date(a.date));
 
+  const AddIncomeButton = () => (
+    <TouchableOpacity 
+      style={styles.addButton} 
+      onPress={handleAddIncome}
+      activeOpacity={0.8}
+    >
+      <Text style={styles.addButtonText}>Add Income</Text>
+    </TouchableOpacity>
+  );
+
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <Surface style={styles.formCard}>
-          <View style={styles.formHeader}>
-            <Text style={styles.formHeaderText}>
-              {editingTransaction ? 'Edit Income' : 'New Income'}
-            </Text>
-          </View>
-          
-          <View style={styles.amountContainer}>
-            <Text style={[styles.currencySymbol, { color: COLORS.success }]}>$</Text>
-            <TextInput
-              placeholder="0.00"
-              value={amount}
-              onChangeText={setAmount}
-              keyboardType="numeric"
-              style={[styles.amountInput, { fontSize: amount ? FONTS.title.fontSize : FONTS.h1.fontSize }]}
-              mode="flat"
-              underlineColor="transparent"
-              activeUnderlineColor="transparent"
-              textColor={COLORS.text}
-              placeholderTextColor={COLORS.textLight}
-            />
-          </View>
-
-          <Text style={styles.sectionTitle}>Category</Text>
-          <CategoryPicker
-            selectedCategory={category}
-            onSelectCategory={setCategory}
-            type="income"
-          />
-
-          <TextInput
-            label="Description"
-            value={description}
-            onChangeText={setDescription}
-            style={styles.input}
-            mode="outlined"
-            outlineColor={COLORS.border}
-            activeOutlineColor={COLORS.success}
-            textColor={COLORS.text}
-            left={<TextInput.Icon icon="text" color={COLORS.textLight} />}
-          />
-
-          <View style={styles.buttonContainer}>
-            <Button
-              mode="contained"
-              onPress={handleAddIncome}
-              style={[
-                styles.button,
-                !amount || !description || !category ? { backgroundColor: COLORS.button.success.disabled } : null
-              ]}
-              disabled={!amount || !description || !category}
-              buttonColor={COLORS.button.success.active}
-              textColor={!amount || !description || !category ? COLORS.button.success.text.disabled : COLORS.button.success.text.active}
-              icon={editingTransaction ? "pencil" : "plus"}
-            >
-              {editingTransaction ? 'Update Income' : 'Add Income'}
-            </Button>
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={styles.keyboardAvoidingContainer}
+      >
+        <ScrollView 
+          contentContainerStyle={styles.scrollContainer}
+          keyboardShouldPersistTaps="handled"
+        >
+          <Surface style={styles.formCard}>
+            <View style={styles.formHeader}>
+              <Text style={styles.formHeaderText}>
+                {editingTransaction ? 'Edit Income' : 'New Income'}
+              </Text>
+            </View>
             
-            {editingTransaction && (
+            <View style={styles.amountContainer}>
+              <Text style={[styles.currencySymbol, { color: COLORS.success }]}>$</Text>
+              <TextInput
+                placeholder="0.00"
+                value={amount}
+                onChangeText={setAmount}
+                keyboardType="numeric"
+                style={[styles.amountInput, { fontSize: amount ? FONTS.title.fontSize : FONTS.h1.fontSize }]}
+                mode="flat"
+                underlineColor="transparent"
+                activeUnderlineColor="transparent"
+                textColor={COLORS.text}
+                placeholderTextColor={COLORS.textLight}
+              />
+            </View>
+
+            <Text style={styles.sectionTitle}>Category</Text>
+            <CategoryPicker
+              selectedCategory={category}
+              onSelectCategory={setCategory}
+              type="income"
+            />
+
+            <TextInput
+              label="Description"
+              value={description}
+              onChangeText={setDescription}
+              style={styles.input}
+              mode="outlined"
+              outlineColor={COLORS.border}
+              activeOutlineColor={COLORS.success}
+              textColor={COLORS.text}
+              left={<TextInput.Icon icon="text" color={COLORS.textLight} />}
+            />
+
+            <View style={styles.buttonContainer}>
               <Button
-                mode="outlined"
-                onPress={() => {
-                  setEditingTransaction(null);
-                  setAmount('');
-                  setDescription('');
-                  setCategory('');
-                }}
-                style={styles.cancelButton}
-                textColor={COLORS.success}
-                icon="close"
+                mode="contained"
+                onPress={handleAddIncome}
+                style={[
+                  styles.button,
+                  !amount || !description || !category ? { backgroundColor: COLORS.button.success.disabled } : null
+                ]}
+                disabled={!amount || !description || !category}
+                buttonColor={COLORS.button.success.active}
+                textColor={!amount || !description || !category ? COLORS.button.success.text.disabled : COLORS.button.success.text.active}
+                icon={editingTransaction ? "pencil" : "plus"}
               >
-                Cancel Edit
+                 <Text style={
+                                  styles.addButtonText
+                                }>{editingTransaction ? 'Update Income' : 'Add Income'}</Text>
+              </Button>
+              
+              {editingTransaction && (
+                <Button
+                  mode="outlined"
+                  onPress={() => {
+                    setEditingTransaction(null);
+                    setAmount('');
+                    setDescription('');
+                    setCategory('');
+                  }}
+                  style={styles.cancelButton}
+                  textColor={COLORS.success}
+                  icon="close"
+                >
+                  Cancel Edit
+                </Button>
+              )}
+            </View>
+          </Surface>
+
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Recent Income</Text>
+              <Text style={styles.sectionSubtitle}>
+                {incomeTransactions.length} {incomeTransactions.length === 1 ? 'transaction' : 'transactions'}
+              </Text>
+            </View>
+            
+            {incomeTransactions.length === 0 ? (
+              <Surface style={styles.emptyState}>
+                <MaterialCommunityIcons name="cash-plus" size={48} color={COLORS.textLight} />
+                <Text style={styles.emptyStateText}>No income yet</Text>
+                <Text style={styles.emptyStateSubtext}>Add your first income above</Text>
+              </Surface>
+            ) : (
+              incomeTransactions.slice(0, 5).map((transaction, index) => (
+                <Surface 
+                  key={transaction.id} 
+                  style={[
+                    styles.transactionCard, 
+                    { marginBottom: index === incomeTransactions.length - 1 ? SPACING.xl : SPACING.m }
+                  ]}
+                >
+                  <TouchableOpacity 
+                    style={styles.transactionCardContent}
+                    activeOpacity={0.8}
+                    onPress={() => toggleActionMenu(transaction.id)}
+                  >
+                    <View style={[
+                      styles.categoryIcon,
+                      { backgroundColor: CATEGORIES[transaction.category]?.color || COLORS.success }
+                    ]}>
+                      <MaterialCommunityIcons
+                        name={CATEGORIES[transaction.category]?.icon || 'cash'}
+                        size={24}
+                        color={COLORS.white}
+                      />
+                    </View>
+                    <View style={styles.transactionInfo}>
+                      <Text style={styles.transactionTitle}>{transaction.description}</Text>
+                      <View style={styles.transactionMeta}>
+                        <MaterialCommunityIcons name="clock-outline" size={14} color={COLORS.textLight} />
+                        <Text style={styles.transactionDate}>
+                          {new Date(transaction.date).toLocaleDateString()}
+                        </Text>
+                      </View>
+                    </View>
+                    <Text style={styles.transactionAmount}>
+                      +${parseFloat(transaction.amount).toFixed(2)}
+                    </Text>
+                  </TouchableOpacity>
+                  
+                  {expandedActionId === transaction.id && (
+                    <View style={styles.expandedActions}>
+                      <TouchableOpacity
+                        style={styles.expandedActionButton}
+                        onPress={() => handleEditPress(transaction)}
+                      >
+                        <View style={styles.expandedActionIcon}>
+                          <MaterialCommunityIcons name="pencil" size={18} color={COLORS.white} />
+                        </View>
+                        <Text style={styles.expandedActionText}>Edit</Text>
+                      </TouchableOpacity>
+                      
+                      <TouchableOpacity
+                        style={[styles.expandedActionButton, styles.deleteActionButton]}
+                        onPress={() => handleDeletePress(transaction)}
+                      >
+                        <View style={[styles.expandedActionIcon, styles.deleteActionIcon]}>
+                          <MaterialCommunityIcons name="delete" size={18} color={COLORS.white} />
+                        </View>
+                        <Text style={[styles.expandedActionText, styles.deleteActionText]}>Delete</Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
+                </Surface>
+              ))
+            )}
+            
+            {incomeTransactions.length > 5 && (
+              <Button
+                mode="text"
+                onPress={() => {}}
+                style={styles.viewAllButton}
+                textColor={COLORS.primary}
+                icon="chevron-right"
+                contentStyle={{ flexDirection: 'row-reverse' }}
+              >
+                View All Income
               </Button>
             )}
           </View>
-        </Surface>
-
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Recent Income</Text>
-            <Text style={styles.sectionSubtitle}>
-              {incomeTransactions.length} {incomeTransactions.length === 1 ? 'transaction' : 'transactions'}
-            </Text>
-          </View>
-          
-          {incomeTransactions.length === 0 ? (
-            <Surface style={styles.emptyState}>
-              <MaterialCommunityIcons name="cash-plus" size={48} color={COLORS.textLight} />
-              <Text style={styles.emptyStateText}>No income yet</Text>
-              <Text style={styles.emptyStateSubtext}>Add your first income above</Text>
-            </Surface>
-          ) : (
-            incomeTransactions.slice(0, 5).map((transaction, index) => (
-              <Surface 
-                key={transaction.id} 
-                style={[
-                  styles.transactionCard, 
-                  { marginBottom: index === incomeTransactions.length - 1 ? SPACING.xl : SPACING.m }
-                ]}
-              >
-                <TouchableOpacity 
-                  style={styles.transactionCardContent}
-                  activeOpacity={0.8}
-                  onPress={() => toggleActionMenu(transaction.id)}
-                >
-                  <View style={[
-                    styles.categoryIcon,
-                    { backgroundColor: CATEGORIES[transaction.category]?.color || COLORS.success }
-                  ]}>
-                    <MaterialCommunityIcons
-                      name={CATEGORIES[transaction.category]?.icon || 'cash'}
-                      size={24}
-                      color={COLORS.white}
-                    />
-                  </View>
-                  <View style={styles.transactionInfo}>
-                    <Text style={styles.transactionTitle}>{transaction.description}</Text>
-                    <View style={styles.transactionMeta}>
-                      <MaterialCommunityIcons name="clock-outline" size={14} color={COLORS.textLight} />
-                      <Text style={styles.transactionDate}>
-                        {new Date(transaction.date).toLocaleDateString()}
-                      </Text>
-                    </View>
-                  </View>
-                  <Text style={styles.transactionAmount}>
-                    +${parseFloat(transaction.amount).toFixed(2)}
-                  </Text>
-                </TouchableOpacity>
-                
-                {expandedActionId === transaction.id && (
-                  <View style={styles.expandedActions}>
-                    <TouchableOpacity
-                      style={styles.expandedActionButton}
-                      onPress={() => handleEditPress(transaction)}
-                    >
-                      <View style={styles.expandedActionIcon}>
-                        <MaterialCommunityIcons name="pencil" size={18} color={COLORS.white} />
-                      </View>
-                      <Text style={styles.expandedActionText}>Edit</Text>
-                    </TouchableOpacity>
-                    
-                    <TouchableOpacity
-                      style={[styles.expandedActionButton, styles.deleteActionButton]}
-                      onPress={() => handleDeletePress(transaction)}
-                    >
-                      <View style={[styles.expandedActionIcon, styles.deleteActionIcon]}>
-                        <MaterialCommunityIcons name="delete" size={18} color={COLORS.white} />
-                      </View>
-                      <Text style={[styles.expandedActionText, styles.deleteActionText]}>Delete</Text>
-                    </TouchableOpacity>
-                  </View>
-                )}
-              </Surface>
-            ))
-          )}
-          
-          {incomeTransactions.length > 5 && (
-            <Button
-              mode="text"
-              onPress={() => {}}
-              style={styles.viewAllButton}
-              textColor={COLORS.primary}
-              icon="chevron-right"
-              contentStyle={{ flexDirection: 'row-reverse' }}
-            >
-              View All Income
-            </Button>
-          )}
-        </View>
-      </ScrollView>
+        </ScrollView>
+      </KeyboardAvoidingView>
       
       <Portal>
         <Dialog visible={deleteDialogVisible} onDismiss={() => setDeleteDialogVisible(false)}>
@@ -287,7 +307,14 @@ export default function Income() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: COLORS.white,
+  },
+  keyboardAvoidingContainer: {
+    flex: 1,
+  },
+  scrollContainer: {
+    flexGrow: 1,
+    paddingBottom: 20, // Ensure there's space at the bottom
   },
   formCard: {
     margin: SPACING.m,
@@ -491,4 +518,24 @@ const styles = StyleSheet.create({
     color: COLORS.success,
     fontWeight: '600',
   },
-}); 
+  addButton: {
+    backgroundColor: COLORS.primary,
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginHorizontal: 20,
+    marginBottom: 20,
+    elevation: 2,  // For Android shadow
+    shadowColor: '#000', // For iOS shadow
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+ addButtonText: {
+    ...FONTS.h4,
+    color: COLORS.gray,
+    fontWeight: '400',
+    
+  },
+});

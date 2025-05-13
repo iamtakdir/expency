@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Dimensions, SafeAreaView, StyleSheet, View } from 'react-native';
+import { useState } from 'react';
+import { Dimensions, SafeAreaView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Button, Surface, Text, TextInput } from 'react-native-paper';
 import { BORDER_RADIUS, COLORS, FONTS, SHADOWS, SPACING } from '../constants/theme';
 
@@ -78,21 +78,13 @@ export default function Signup({ navigation }) {
             error={password && confirmPassword && password !== confirmPassword}
           />
 
-          <Button
-            mode="contained"
+          <TouchableOpacity 
+            style={styles.button} 
             onPress={handleSignup}
-            style={[
-              styles.button,
-              !username || !password || !confirmPassword || password !== confirmPassword ? 
-                { backgroundColor: COLORS.button.primary.disabled } : null
-            ]}
-            disabled={!username || !password || !confirmPassword || password !== confirmPassword}
-            buttonColor={COLORS.button.primary.active}
-            textColor={!username || !password || !confirmPassword || password !== confirmPassword ? 
-              COLORS.button.primary.text.disabled : COLORS.button.primary.text.active}
+            activeOpacity={0.8}
           >
-            Sign Up
-          </Button>
+            <Text style={styles.buttonText}>Sign Up</Text>
+          </TouchableOpacity>
 
           <View style={styles.footer}>
             <Text style={styles.footerText}>Already have an account? </Text>
@@ -148,9 +140,23 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
   },
   button: {
-    marginTop: SPACING.m,
-    borderRadius: BORDER_RADIUS.m,
-    paddingVertical: SPACING.xs,
+    backgroundColor: COLORS.primary,
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    marginTop: 24,
+    marginBottom: 16,
+    width: '100%',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  buttonText: {
+    ...FONTS.h3,
+    color: COLORS.white,
+    fontWeight: '600',
   },
   footer: {
     flexDirection: 'row',
@@ -166,4 +172,4 @@ const styles = StyleSheet.create({
     ...FONTS.body,
     fontWeight: '600',
   },
-}); 
+});

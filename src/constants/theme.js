@@ -8,6 +8,7 @@ export const COLORS = {
   success: '#10B981',  // Vibrant green
   danger: '#EF4444',   // Vibrant red
   warning: '#F59E0B',  // Amber for warnings
+  gray: '#DDDDDD',    // Gray for disabled text
   info: '#3B82F6',     // Blue for information
   background: '#F1F5F9', // Slightly darker background for better contrast
   card: '#FFFFFF',
