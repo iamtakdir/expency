@@ -15,9 +15,8 @@ export default function Income() {
   const [deleteDialogVisible, setDeleteDialogVisible] = useState(false);
   const [transactionToDelete, setTransactionToDelete] = useState(null);
   const [expandedActionId, setExpandedActionId] = useState(null);
-
   const handleAddIncome = () => {
-    if (!amount || !description || !category) return;
+    if (!amount || !category) return;
 
     if (editingTransaction) {
       updateTransaction(editingTransaction.id, {
@@ -128,10 +127,9 @@ export default function Income() {
               <Button
                 mode="contained"
                 onPress={handleAddIncome}
-                style={styles.button}
-                disabled={!amount || !description || !category}
+                style={styles.button}                disabled={!amount || !category}
                 buttonColor={COLORS.button.success.active}
-                textColor={!amount || !description || !category ? COLORS.button.success.text.disabled : COLORS.button.success.text.active}
+                textColor={!amount || !category ? COLORS.button.success.text.disabled : COLORS.button.success.text.active}
                 icon={editingTransaction ? "pencil" : "plus"}
               >
                 {editingTransaction ? 'Update Income' : 'Add Income'}

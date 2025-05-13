@@ -15,9 +15,8 @@ export default function Expense() {
   const [deleteDialogVisible, setDeleteDialogVisible] = useState(false);
   const [transactionToDelete, setTransactionToDelete] = useState(null);
   const [expandedActionId, setExpandedActionId] = useState(null);
-
   const handleAddExpense = () => {
-    if (!amount || !description || !category) return;
+    if (!amount || !category) return;
 
     if (editingTransaction) {
       updateTransaction(editingTransaction.id, {
@@ -67,12 +66,11 @@ export default function Expense() {
   const toggleActionMenu = (id) => {
     setExpandedActionId(expandedActionId === id ? null : id);
   };
-
   const expenseTransactions = transactions
     .filter(t => t.type === 'expense')
     .sort((a, b) => new Date(b.date) - new Date(a.date));
 
-  const isAddDisabled = !amount || !description || !category;
+  const isAddDisabled = !amount || !category;
   const addButtonTextColor = isAddDisabled
     ? COLORS.button.danger.text.disabled
     : COLORS.button.danger.text.active;
