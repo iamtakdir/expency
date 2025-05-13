@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "expancy",
+    "name": "Expancy",
     "slug": "expancy",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -8,13 +8,17 @@
     "scheme": "expancy",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.expancy.app"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
+      "package": "com.expancy.app",
+      "versionCode": 1,
+      "permissions": [],
       "edgeToEdgeEnabled": true
     },
     "web": {
@@ -32,6 +36,11 @@
           "backgroundColor": "#ffffff"
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "expancy-app"
+      }
+    }
   }
 }
