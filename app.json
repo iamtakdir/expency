@@ -39,8 +39,9 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "expancy-app"
+        "projectId": "1ad2d308-19a4-40e7-a40e-842328d10749"
       }
-    }
+    },
+    "owner": "iamtakdir"
   }
 }
